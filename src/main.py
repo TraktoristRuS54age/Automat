@@ -78,7 +78,7 @@ def main() -> int:
     # Создаём экземпляр анализатора
     try:
         analyzer = Analyzer(table, grammar)
-        with open('../input.txt', 'r') as input_file:
+        with open('test.txt', 'r') as input_file:
             analyzer.analyze(input_file)
 
         print("OK")

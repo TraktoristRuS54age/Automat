@@ -1,0 +1,5 @@
+Z -> S END
+S -> S PLUS INT
+S -> S MINUS REAL
+S -> INT
+S -> REAL
