@@ -9,12 +9,12 @@ class Lexer:
     def __init__(self, input_file: str):
         self.file = open(input_file, 'r', encoding='utf-8')
         self.buffer = ''
-        self.line = 1
-        self.column = 1
+        self.line = 1      # текущая строка
+        self.column = 1    # текущая позиция в строке
         self.eof = False
-        self.prev = ''
+        self.prev = ''     # предыдущий символ
 
-
+    # исключение некорректного распознавания (ifx != if x)
     def _is_not_wrapped(self, result: str):
         return (self.prev not in ' \n\t\r"()+-;:,.[]{}*/\'\xa0<>='
                 or (len(self.buffer) > len(result)
@@ -26,12 +26,13 @@ class Lexer:
             chunk = self.file.read(1024) # читаем файл блоками
             if chunk:
                 self.buffer += chunk
+                # смотрим, что чанк законченный, иначе дополняем
                 if not any(map(lambda space: space in self.buffer, ' \n\t\r')):
-                    self._fill_buffer()
+                    self._fill_buffer()    # нет проблеа в конце
                 if '//' in self.buffer and '\n' not in self.buffer:
-                    self._fill_buffer()
+                    self._fill_buffer()    # строчный комментарий не завершен переводом строки
                 if '{' in self.buffer and '}' not in self.buffer:
-                    self._fill_buffer()
+                    self._fill_buffer()    # блочный комментарий не зацрыт
             else:
                 self.eof = True
 
@@ -48,7 +49,7 @@ class Lexer:
                 result = simulator.run(self.buffer)
                 if result:
                     if token_name == 'LINE_COMMENT':
-                        result = result[:-1]
+                        result = result[:-1]    # убираем перенос строки из коммента
                     if token_name in (
                             'ARRAY', 'BEGIN', 'ELSE', 'END', 'IF', 'OF', 'OR', 'PROGRAM', 'PROCEDURE', 'THEN',
                             'TYPE', 'VAR', 'INTEGER', 'IDENTIFIER'):
@@ -56,10 +57,10 @@ class Lexer:
                             continue
                     if token_name == 'INTEGER':
                         if len(result) > 16:
-                            token_name = 'BAD'
+                            token_name = 'BAD'    # длина числа должна <= 16
                     if token_name == 'IDENTIFIER':
                         if len(result) > 256:
-                            token_name = 'BAD'
+                            token_name = 'BAD'    # идентификатор не должен превышать 256 символов
                     if 'BAD_' in token_name:
                         token_name = 'BAD'
                     token = LexerToken(token_name, result, (self.line, self.column))
@@ -72,9 +73,9 @@ class Lexer:
 
     def _update_position(self, result: str) -> None:
         self.prev = result[-1]
-        self.buffer = self.buffer[len(result):]
-        self.column += len(result)
-        if '\n' in result:
+        self.buffer = self.buffer[len(result):]     # очищаем буфер от обработанной части
+        self.column += len(result)    # двигаем бегунок в строке
+        if '\n' in result:            # если в токене перенос строки, то переходим на новоую строку
             lines = result.split('\n')
             self.line += len(lines) - 1
             self.column = len(lines[-1]) + 1
